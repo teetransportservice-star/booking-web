@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>จองคิวขนส่งสินค้า</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f6f8;--card:#fff;--text:#1b2430;--muted:#6b7684;--line:#dfe4ea;--brand:#06c755;--brandtxt:#fff;--sel:#e8f9ef}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151b;--card:#1a212a;--text:#eef2f6;--muted:#9aa5b1;--line:#2c3541;--brand:#06c755;--brandtxt:#06210f;--sel:#12301f}}
+:root[data-theme="dark"]{--bg:#10151b;--card:#1a212a;--text:#eef2f6;--muted:#9aa5b1;--line:#2c3541;--brand:#06c755;--brandtxt:#06210f;--sel:#12301f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans Thai","Sarabun",system-ui,sans-serif;font-size:15px}
+.wrap{max-width:520px;margin:0 auto;padding:12px 14px 90px}
+header{display:flex;align-items:center;justify-content:space-between;padding:6px 2px 10px}
+h1{font-size:18px;margin:0}
+.who{font-size:12px;color:var(--muted)}
+.tabs{display:flex;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:3px;margin-bottom:12px}
+.tabs button{flex:1;border:0;background:none;color:var(--muted);padding:9px;border-radius:9px;font:inherit;font-weight:600}
+.tabs button.on{background:var(--brand);color:var(--brandtxt)}
+.steps{display:flex;gap:6px;margin-bottom:12px}
+.steps i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.steps i.on{background:var(--brand)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin:0 0 10px}
+.veh{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.v{border:2px solid var(--line);border-radius:12px;padding:10px;background:var(--card);color:var(--text);text-align:left;font:inherit;cursor:pointer}
+.v.on{border-color:var(--brand);background:var(--sel)}
+.v .e{font-size:28px}.v b{display:block;margin-top:2px}.v small{color:var(--muted);display:block;line-height:1.35}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.slot{padding:9px 0;text-align:center;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+.slot.on{background:var(--brand);color:var(--brandtxt);border-color:var(--brand);font-weight:700}
+.slot:disabled{opacity:.35;text-decoration:line-through}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center}
+.bar button{flex:1;max-width:250px;padding:13px;border-radius:12px;border:0;font:inherit;font-weight:700}
+.p{background:var(--brand);color:var(--brandtxt)}.s{background:var(--bg);color:var(--text);border:1px solid var(--line)!important}
+.p:disabled{opacity:.4}
+.sum div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px dashed var(--line)}
+.sum div:last-child{border:0}.sum span{color:var(--muted)}.sum b{text-align:right}
+.err{color:#e5484d;font-size:13px;margin-top:8px;min-height:16px}
+.bk{display:flex;justify-content:space-between;gap:8px}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--sel);color:var(--brand);font-weight:700;white-space:nowrap}
+.empty{text-align:center;color:var(--muted);padding:30px 0}
+.ok{text-align:center;padding:10px 0}.ok .big{font-size:48px}
+.link{background:none;border:0;color:#e5484d;font:inherit;font-size:13px;padding:6px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><h1>🚚 จองคิวขนส่งสินค้า</h1><div class="who" id="who">โหมดทดลอง</div></header>
+  <div class="tabs"><button id="t1" class="on" onclick="tab(1)">จองคิวใหม่</button><button id="t2" onclick="tab(2)">คิวของฉัน</button><button id="t3" style="display:none" onclick="tab(3)">แอดมิน</button></div>
+  <div id="app"></div>
+</div>
+<div class="bar" id="bar"></div>
+
+<script>
+// ====== ตั้งค่า ======
+var LIFF_ID = "2012136960-dNGNm2uj"; // ใส่ LIFF ID จาก LINE Developers Console
+var API_URL = "https://booking-api.qtransport.workers.dev"; // URL ของ backend (server.js) เช่น https://api.example.com ; ว่าง = โหมดทดลองในเครื่อง
+var ADMIN_PIN = "1234"; // ใช้เฉพาะโหมดทดลอง (เมื่อไม่มี API_URL) — เปิดหน้าแอดมินที่ #admin
+var VEHICLES = [
+  {id:"pickup4",e:"🛻",n:"รถกระบะ 4 ล้อ",c:"บรรทุกถึง 1 ตัน",d:"ของชิ้นเล็ก/กลาง ส่งในเมือง",base:600,km:12},
+  {id:"truck6",e:"🚚",n:"รถ 6 ล้อ",c:"บรรทุกถึง 6 ตัน",d:"พาเลท เฟอร์นิเจอร์ สินค้าทั่วไป",base:1800,km:22},
+  {id:"truck10",e:"🚛",n:"รถ 10 ล้อ",c:"บรรทุกถึง 15 ตัน",d:"สินค้าปริมาณมาก ข้ามจังหวัด",base:3500,km:35},
+  {id:"trailer",e:"🚜",n:"รถพ่วง/เทรลเลอร์",c:"บรรทุกถึง 30 ตัน",d:"ตู้คอนเทนเนอร์ เครื่องจักรใหญ่",base:6000,km:55},
+  {id:"cold",e:"❄️",n:"รถห้องเย็น",c:"บรรทุกถึง 3 ตัน",d:"อาหารสด ยา สินค้าควบคุมอุณหภูมิ",base:2800,km:30},
+  {id:"van",e:"📦",n:"กระบะคอกหรือตู้ทึบ",c:"บรรทุกถึง 3 ตัน",d:"สินค้าทั่วไป พัสดุ ของที่ต้องกันฝน",base:1200,km:18}
+];
+var SLOTS=["08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00","17:00"];
+var CARGO=["สินค้าทั่วไป","อาหาร/เครื่องดื่ม","วัสดุก่อสร้าง","เฟอร์นิเจอร์","เครื่องจักร/อุปกรณ์","อิเล็กทรอนิกส์","อื่น ๆ"];
+
+// ====== สถานะ ======
+var S={step:1,tab:1,v:null,f:{name:"",phone:"",from:"",to:"",cargo:CARGO[0],weight:"",km:"",date:"",time:"",note:""},err:"",done:null};
+var profile=null,liffOk=false;
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function load(){try{return JSON.parse(localStorage.getItem("bookings")||"[]")}catch(e){return []}}
+function save(a){try{localStorage.setItem("bookings",JSON.stringify(a))}catch(e){}}
+function veh(id){return VEHICLES.filter(function(x){return x.id===id})[0]}
+function est(){var v=veh(S.v);if(!v)return 0;return v.base+v.km*(parseFloat(S.f.km)||0)}
+function baht(n){return "฿"+Math.round(n).toLocaleString("th-TH")}
+function today(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
+
+function fmtDate(d){try{return new Date(d+"T00:00").toLocaleDateString("th-TH",{day:"numeric",month:"short",year:"numeric"})}catch(e){return d}}
+
+// ====== LIFF ======
+function initLiff(){
+  if(!LIFF_ID||typeof liff==="undefined")return;
+  liff.init({liffId:LIFF_ID}).then(function(){
+    liffOk=true;
+    if(!liff.isLoggedIn()){liff.login();return}
+    return liff.getProfile().then(function(p){
+      profile=p;S.f.name=S.f.name||p.displayName;
+      document.getElementById("who").textContent="👤 "+p.displayName;render();
+    });
+  }).catch(function(e){console.warn("LIFF",e)});
+}
+(function(){
+  if(!LIFF_ID||location.hash==="#admin")return;
+  try{var s=document.createElement("script");s.src="https://static.line-scdn.net/liff/edge/2/sdk.js";s.onload=initLiff;document.head.appendChild(s)}catch(e){}
+})();
+
+// ====== ส่วนแสดงผล ======
+function tab(n){S.tab=n;S.done=null;["t1","t2","t3"].forEach(function(id,i){document.getElementById(id).className=(i+1)==n?"on":""});
+  if(n==2&&API_URL&&profile){fetch(API_URL+"/my",{headers:authH()}).then(function(r){return r.json()}).then(function(d){save(d);render()}).catch(function(){})}
+  if(n==3&&AK){adminLoad();return}
+  render()}
+function bar(html){document.getElementById("bar").innerHTML=html}
+function render(){
+  var a=document.getElementById("app");
+  if(S.tab===3){renderAdmin();return}
+  if(S.tab===2){renderList(a);return}
+  if(S.done){renderDone(a);return}
+  var steps='<div class="steps">'+[1,2,3].map(function(i){return '<i class="'+(i<=S.step?"on":"")+'"></i>'}).join("")+'</div>';
+  if(S.step===1){
+    a.innerHTML=steps+'<div class="card"><h2>1. เลือกรูปแบบรถ</h2><div class="veh">'+VEHICLES.map(function(v){
+      return '<button class="v '+(S.v===v.id?"on":"")+'" onclick="pickV(\''+v.id+'\')"><span class="e">'+v.e+'</span><b>'+v.n+'</b><small>'+v.c+'<br>'+v.d+'</small></button>'}).join("")+'</div></div>';
+    bar('<button class="p" '+(S.v?"":"disabled")+' onclick="go(2)">ถัดไป</button>');
+  }else if(S.step===2){
+    var f=S.f;
+    a.innerHTML=steps+'<div class="card"><h2>2. รายละเอียดการขนส่ง</h2>'+
+    '<label>ชื่อผู้จอง</label><input id="name" value="'+esc(f.name)+'" placeholder="ชื่อ-นามสกุล">'+
+    '<label>เบอร์โทร</label><input id="phone" type="tel" inputmode="tel" value="'+esc(f.phone)+'" placeholder="08x-xxx-xxxx">'+
+    '<label>จุดรับสินค้า</label><input id="from" value="'+esc(f.from)+'" placeholder="ที่อยู่ / จังหวัด">'+
+    '<label>จุดส่งสินค้า</label><input id="to" value="'+esc(f.to)+'" placeholder="ที่อยู่ / จังหวัด">'+
+    '<div class="row"><div><label>ประเภทสินค้า</label><select id="cargo">'+CARGO.map(function(c){return '<option'+(c===f.cargo?" selected":"")+'>'+c+'</option>'}).join("")+'</select></div>'+
+    '<div><label>น้ำหนัก (กก.)</label><input id="weight" type="number" inputmode="numeric" min="1" value="'+esc(f.weight)+'"></div></div>'+
+    '<label>ระยะทางโดยประมาณ (กม.)</label><input id="km" type="number" inputmode="numeric" min="1" value="'+esc(f.km)+'">'+
+    '<label>หมายเหตุ</label><textarea id="note" rows="2" placeholder="เช่น ต้องมีคนช่วยยก, ขึ้นตึกชั้น 3">'+esc(f.note)+'</textarea></div>'+
+    '<div class="card"><h2>เลือกวันและเวลารับสินค้า</h2><input id="date" type="date" min="'+today()+'" value="'+esc(f.date)+'" onchange="saveF();render()">'+
+    '<label>รอบเวลา</label><div class="slots">'+SLOTS.map(function(t){
+      var off=false;
+      return '<button class="slot '+(f.time===t?"on":"")+'" '+(off?"disabled":"")+' onclick="pickT(\''+t+'\')">'+t+'</button>'}).join("")+'</div>'+
+    '<div class="err" id="err">'+esc(S.err)+'</div></div>';
+    bar('<button class="s" onclick="saveF();go(1)">ย้อนกลับ</button><button class="p" onclick="next2()">ตรวจสอบ</button>');
+  }else{
+    var v=veh(S.v),f=S.f;
+    a.innerHTML=steps+'<div class="card sum"><h2>3. ตรวจสอบและยืนยัน</h2>'+
+    row("รถ",v.e+" "+v.n)+row("ผู้จอง",f.name)+row("โทร",f.phone)+row("รับสินค้า",f.from)+row("ส่งสินค้า",f.to)+
+    row("สินค้า",f.cargo+" · "+f.weight+" กก.")+row("ระยะทาง",f.km+" กม.")+row("นัดรับ",fmtDate(f.date)+" เวลา "+f.time+" น.")+(f.note?row("หมายเหตุ",f.note):"")+
+    row("ราคาประเมิน",'<span style="color:var(--brand);font-size:18px">'+baht(est())+'</span>')+'</div>'+
+    '<div class="who" style="text-align:center">* ราคานี้เป็นราคาประเมิน ทีมงานจะยืนยันราคาจริงอีกครั้ง</div>';
+    bar('<button class="s" onclick="go(2)">แก้ไข</button><button class="p" onclick="confirmB()">ยืนยันจองคิว</button>');
+  }
+}
+function row(k,v){return '<div><span>'+k+'</span><b>'+(k==="ราคาประเมิน"?v:esc(v))+'</b></div>'}
+function pickV(id){S.v=id;render()}
+function pickT(t){saveF();S.f.time=t;render()}
+function go(n){S.step=n;S.err="";render();window.scrollTo(0,0)}
+function saveF(){
+  ["name","phone","from","to","cargo","weight","km","date","note"].forEach(function(k){var el=document.getElementById(k);if(el)S.f[k]=el.value.trim()})
+}
+function next2(){
+  saveF();var f=S.f,m="";
+  if(!f.name)m="กรุณากรอกชื่อ";else if(!/^0\d{8,9}$/.test(f.phone.replace(/[-\s]/g,"")))m="เบอร์โทรไม่ถูกต้อง";
+  else if(!f.from||!f.to)m="กรุณากรอกจุดรับและจุดส่งสินค้า";
+  else if(!(+f.weight>0))m="กรุณาระบุน้ำหนักสินค้า";else if(!(+f.km>0))m="กรุณาระบุระยะทางโดยประมาณ";
+  else if(!f.date)m="กรุณาเลือกวันที่";else if(!f.time)m="กรุณาเลือกรอบเวลา";
+  if(m){S.err=m;render();return}
+  go(3)
+}
+function confirmB(){
+  var v=veh(S.v),f=S.f;
+  
+  var b={id:"BK"+Date.now().toString().slice(-6),vehicle:v.n,emoji:v.e,name:f.name,phone:f.phone,from:f.from,to:f.to,cargo:f.cargo,weight:f.weight,km:f.km,date:f.date,time:f.time,note:f.note,price:est(),status:"รอยืนยัน",userId:profile?profile.userId:null};
+  var all=load();all.unshift(b);save(all);
+  if(API_URL){fetch(API_URL+"/bookings",{method:"POST",headers:authH(),body:JSON.stringify(b)}).then(function(r){if(!r.ok)throw 0;return r.json()}).then(function(sb){var l=load();l.forEach(function(x){if(x.id===b.id)x.id=sb.id});save(l);b.id=sb.id;if(S.done===b)render()}).catch(function(){alert("ส่งคำขอจองไม่สำเร็จ กรุณาเปิดผ่านแอป LINE แล้วลองใหม่");save(load().filter(function(x){return x.id!==b.id}));S.done=null;go(2)})}
+  S.done=b;
+  if(!API_URL&&liffOk&&liff.isInThirdPartyApp&&liff.isApiAvailable&&liff.isApiAvailable("sendMessages")){
+    var t="✅ จองคิวขนส่งสำเร็จ\nรหัส: "+b.id+"\nรถ: "+b.vehicle+"\nรับ: "+b.from+"\nส่ง: "+b.to+"\nนัด: "+fmtDate(b.date)+" "+b.time+" น.\nประเมิน: "+baht(b.price);
+    try{liff.sendMessages([{type:"text",text:t}]).catch(function(){})}catch(e){}
+  }
+  render();window.scrollTo(0,0)
+}
+function renderDone(a){
+  var b=S.done;
+  a.innerHTML='<div class="card ok"><div class="big">✅</div><h2>จองคิวเรียบร้อย</h2><p>รหัสการจอง <b>'+esc(b.id)+'</b></p>'+
+  '<p class="who">'+esc(b.emoji+" "+b.vehicle)+'<br>'+esc(fmtDate(b.date))+' เวลา '+esc(b.time)+' น.<br>ประเมิน '+baht(b.price)+'</p>'+
+  '<p class="who">ทีมงานจะติดต่อกลับเพื่อยืนยันราคาและรายละเอียด</p></div>';
+  bar('<button class="s" onclick="tab(2)">ดูคิวของฉัน</button><button class="p" onclick="reset()">จองเพิ่ม</button>');
+}
+function reset(){S.step=1;S.v=null;S.done=null;S.f.from=S.f.to=S.f.weight=S.f.km=S.f.date=S.f.time=S.f.note="";render()}
+function renderList(a){
+  var l=load();
+  a.innerHTML=l.length?l.map(function(b){
+    return '<div class="card"><div class="bk"><b>'+esc(b.emoji+" "+b.vehicle)+'</b><span class="tag">'+esc(b.status)+'</span></div>'+
+    '<div class="who" style="margin-top:6px;line-height:1.6">รหัส '+esc(b.id)+'<br>'+esc(b.from)+' → '+esc(b.to)+'<br>'+esc(fmtDate(b.date))+' เวลา '+esc(b.time)+' น. · '+baht(b.price)+'</div>'+
+    (b.status==="รอยืนยัน"?'<button class="link" onclick="cancelB(\''+b.id+'\')">ยกเลิกคิว</button>':'')+'</div>'}).join(""):
+    '<div class="empty">ยังไม่มีรายการจอง</div>';
+  bar('<button class="p" onclick="tab(1);reset()">+ จองคิวใหม่</button>');
+}
+function cancelB(id){
+  if(!confirm("ยืนยันการยกเลิกคิว "+id+" ?"))return;
+  var l=load();l.forEach(function(b){if(b.id===id)b.status="ยกเลิก"});save(l);
+  if(API_URL){fetch(API_URL+"/bookings/"+id+"/cancel",{method:"POST",headers:authH()}).catch(function(){})}
+  render()
+}
+// ส่ง LIFF access token ให้ backend ตรวจสอบตัวตนกับ LINE (backend ไม่เชื่อ userId ที่ client ส่งมาเอง)
+function authH(){var h={"Content-Type":"application/json"};try{if(liffOk)h.Authorization="Bearer "+liff.getAccessToken()}catch(e){}return h}
+// ====== หน้าแอดมิน ======
+var AK="",AF="ทั้งหมด",AL=[];
+var STS=["ทั้งหมด","รอยืนยัน","ยืนยันแล้ว","กำลังขนส่ง","เสร็จสิ้น","ปฏิเสธ","ยกเลิก"];
+var NEXT={"รอยืนยัน":["ยืนยันแล้ว","ปฏิเสธ"],"ยืนยันแล้ว":["กำลังขนส่ง"],"กำลังขนส่ง":["เสร็จสิ้น"]};
+function api(p,o){o=o||{};o.headers={"Content-Type":"application/json","x-admin-pin":AK};return fetch(API_URL+p,o).then(function(r){if(!r.ok)throw 0;return r.json()})}
+function login(){
+  var p=document.getElementById("pin").value;AK=p;
+  if(API_URL){api("/bookings").then(function(d){AL=d;renderAdmin()}).catch(function(){AK="";document.getElementById("aerr").textContent="PIN ไม่ถูกต้อง หรือเชื่อมต่อเซิร์ฟเวอร์ไม่ได้"})}
+  else if(p===ADMIN_PIN){adminLoad()}else{AK="";document.getElementById("aerr").textContent="PIN ไม่ถูกต้อง"}
+}
+function adminLoad(){
+  if(API_URL){api("/bookings").then(function(d){AL=d;renderAdmin()}).catch(function(){})}
+  else{AL=load();renderAdmin()}
+}
+function setSt(id,st){
+  if(API_URL){api("/bookings/"+id+"/status",{method:"POST",body:JSON.stringify({status:st})}).then(adminLoad).catch(function(){alert("อัปเดตไม่สำเร็จ")})}
+  else{var l=load();l.forEach(function(b){if(b.id===id)b.status=st});save(l);adminLoad()}
+}
+function setAF(v){AF=v;renderAdmin()}
+function logout(){AK="";renderAdmin()}
+function renderAdmin(){
+  var a=document.getElementById("app");
+  if(!AK){
+    a.innerHTML='<div class="card"><h2>เข้าสู่ระบบแอดมิน</h2><input id="pin" type="password" placeholder="PIN"><div class="err" id="aerr"></div></div>';
+    bar('<button class="p" onclick="login()">เข้าสู่ระบบ</button>');return;
+  }
+  var cnt={};AL.forEach(function(b){cnt[b.status]=(cnt[b.status]||0)+1});
+  var list=AL.filter(function(b){return AF==="ทั้งหมด"||b.status===AF}).sort(function(x,y){return (x.date+x.time)<(y.date+y.time)?-1:1});
+  a.innerHTML='<div class="card"><h2>จัดการคิว ('+AL.length+' รายการ)</h2><div class="who" style="margin-bottom:8px">รอยืนยัน '+(cnt["รอยืนยัน"]||0)+' · กำลังขนส่ง '+(cnt["กำลังขนส่ง"]||0)+' · เสร็จสิ้น '+(cnt["เสร็จสิ้น"]||0)+'</div>'+
+  '<select onchange="setAF(this.value)">'+STS.map(function(s){return '<option'+(s===AF?" selected":"")+'>'+s+'</option>'}).join("")+'</select></div>'+
+  (list.length?list.map(function(b){
+    return '<div class="card"><div class="bk"><b>'+esc(b.emoji+" "+b.vehicle)+'</b><span class="tag">'+esc(b.status)+'</span></div>'+
+    '<div class="who" style="margin-top:6px;line-height:1.7">รหัส '+esc(b.id)+' · '+esc(fmtDate(b.date))+' '+esc(b.time)+' น.<br>👤 '+esc(b.name)+' · <a href="tel:'+esc(b.phone)+'">'+esc(b.phone)+'</a><br>'+esc(b.from)+' → '+esc(b.to)+'<br>'+esc(b.cargo)+' · '+esc(b.weight)+' กก. · '+esc(b.km)+' กม. · '+baht(b.price)+(b.note?'<br>📝 '+esc(b.note):'')+'</div>'+
+    (NEXT[b.status]||[]).map(function(s){return '<button class="slot" style="width:auto;margin:8px 6px 0 0;padding:8px 14px" onclick="setSt(\''+esc(b.id)+'\',\''+s+'\')">'+s+'</button>'}).join("")+'</div>'}).join(""):'<div class="empty">ไม่มีรายการ</div>');
+  bar('<button class="s" onclick="adminLoad()">รีเฟรช</button><button class="s" onclick="logout()">ออกจากระบบ</button>');
+}
+if(location.hash==="#admin")document.getElementById("t3").style.display="";
+render();
+</script>
+</body>
+</html>
