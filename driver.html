@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>สมัครคนขับร่วม</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f6f8;--card:#fff;--text:#1b2430;--muted:#6b7684;--line:#dfe4ea;--brand:#06c755;--bt:#fff;--sel:#e8f9ef}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10151b;--card:#1a212a;--text:#eef2f6;--muted:#9aa5b1;--line:#2c3541;--bt:#06210f;--sel:#12301f}}
+:root[data-theme="dark"]{--bg:#10151b;--card:#1a212a;--text:#eef2f6;--muted:#9aa5b1;--line:#2c3541;--bt:#06210f;--sel:#12301f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans Thai","Sarabun",system-ui,sans-serif;font-size:15px}
+.wrap{max-width:520px;margin:0 auto;padding:12px 14px 40px}
+header{display:flex;justify-content:space-between;align-items:center;padding:6px 2px 10px}h1{font-size:18px;margin:0}
+.who{font-size:12px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+h2{font-size:15px;margin:0 0 6px}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);font:inherit}
+input[type=checkbox]{width:auto;margin-right:8px}
+.btn{width:100%;padding:13px;border-radius:12px;border:0;font:inherit;font-weight:700;margin-top:8px}
+.p{background:var(--brand);color:var(--bt)}.s{background:var(--bg);color:var(--text);border:1px solid var(--line)}
+.err{color:#e5484d;font-size:13px;min-height:18px;margin-top:8px}
+.tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--sel);color:var(--brand);font-weight:700;white-space:nowrap}
+.bk{display:flex;justify-content:space-between;gap:8px}
+.sum div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.sum span{color:var(--muted)}.sum b{text-align:right;word-break:break-all}
+.note{font-size:12px;color:var(--muted);line-height:1.5}
+</style>
+</head>
+<body>
+<div class="wrap"><header><h1>🚛 สมัครคนขับร่วม</h1><div class="who" id="who">โหมดทดลอง</div></header><div id="app" class="card">กำลังโหลด…</div></div>
+<script>
+// ====== ตั้งค่า ======
+var LIFF_ID="2012136960-v3vSQQZ0";   // LIFF ID ของแอปคนขับ (แยกจากแอปลูกค้า)
+var API_URL="https://teetransportservice-star.github.io/booking-web";   // URL ของ Worker; ว่าง = โหมดทดลองในเครื่อง
+var ADMIN_PIN="1234"; // ใช้เฉพาะโหมดทดลอง
+var TRAILER="รถพ่วง/เทรลเลอร์";
+var VEH=["รถกระบะ 4 ล้อ","กระบะคอกหรือตู้ทึบ","รถ 6 ล้อ","รถ 10 ล้อ",TRAILER,"รถห้องเย็น"];
+var BANKS=["กสิกรไทย","ไทยพาณิชย์","กรุงเทพ","กรุงไทย","กรุงศรีอยุธยา","ทหารไทยธนชาต (ttb)","ออมสิน","ธ.ก.ส.","ซีไอเอ็มบี ไทย","ยูโอบี","เกียรตินาคินภัทร","ทิสโก้"];
+var INS=["ชั้น 1","ชั้น 2+","ชั้น 3+","ชั้น 2","ชั้น 3"];
+// [key, ป้ายชื่อ, ชนิด(txt|tel|num|date|sel), ตัวเลือก/ความยาว, "tr"=เฉพาะรถพ่วง]
+var SEC=[
+["1. ข้อมูลส่วนตัว",[["firstName","ชื่อ"],["lastName","นามสกุล"],["phone","เบอร์โทรศัพท์","tel"],["idCard","เลขบัตรประชาชน 13 หลัก","num",13]]],
+["2. ใบขับขี่",[["licenseNo","เลขที่ใบขับขี่"],["licenseExpiry","วันหมดอายุใบขับขี่","date"]]],
+["3. รถที่ใช้ขนส่ง",[["vehicle","ประเภทรถ","sel",VEH],["plate","เลขทะเบียนรถ"],["trailerPlate","เลขทะเบียนหาง","txt",0,"tr"]]],
+["4. พ.ร.บ. รถยนต์",[["actCompany","บริษัทที่ทำ พ.ร.บ."],["actNo","เลขที่กรมธรรม์ พ.ร.บ."],["actExpiry","วันหมดอายุ พ.ร.บ.","date"]]],
+["5. ประกันรถยนต์",[["insCompany","บริษัทประกัน"],["insType","ประเภทประกัน","sel",INS],["insNo","เลขที่กรมธรรม์"],["insExpiry","วันหมดอายุประกัน","date"]]],
+["6. บัญชีรับเงิน",[["bankName","ธนาคาร","sel",BANKS],["bankAcct","เลขที่บัญชี","num",15],["bankAcctName","ชื่อบัญชี"]]]
+];
+var profile=null,liffOk=false,AK="",AL=[],AF="ทั้งหมด";
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
+function app(h){document.getElementById("app").className="";document.getElementById("app").innerHTML=h}
+
+// ====== เรียก API (หรือจำลองในเครื่องเมื่อไม่มี API_URL) ======
+function api(m,p,b,adm){
+  if(!API_URL)return Promise.resolve(mock(p,b));
+  var h={"Content-Type":"application/json"};
+  if(adm)h["x-admin-pin"]=AK;else if(liffOk)h.Authorization="Bearer "+liff.getAccessToken();
+  return fetch(API_URL+p,{method:m,headers:h,body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().then(function(j){if(!r.ok)throw j;return j})});
+}
+function mock(p,b){
+  var L=[];try{L=JSON.parse(localStorage.getItem("drv")||"[]")}catch(e){}
+  function sv(){try{localStorage.setItem("drv",JSON.stringify(L))}catch(e){}}
+  function g(id){return L.filter(function(x){return x.id===id})[0]}
+  var x;
+  if(p==="/driver/me")return g("me")||{registered:false};
+  if(p==="/driver/register"){L=L.filter(function(x){return x.id!=="me"});L.push(Object.assign({registered:true,id:"me",status:"รอตรวจสอบ",available:0},b));sv();return g("me")}
+  if(p==="/driver/availability"){x=g("me");x.available=b.available?1:0;sv();return x}
+  var JB=[{id:"BK000001",vehicle:"รถ 6 ล้อ",from:"สมุทรปราการ",to:"ขอนแก่น",cargo:"สินค้าทั่วไป",weight:3000,km:450,date:"2026-11-05",time:"09:00",price:11700,customer:"คุณลูกค้า",offers:[{driverId:"x",name:"สมชาย ใจดี",plate:"1กข 1234",price:10500,note:""}]}];
+  if(p==="/driver/jobs"||p==="/driver/admin/jobs")return JB;
+  if(p==="/driver/my-jobs")return [];
+  if(/^\/driver\/jobs\//.test(p))return /(accept|offer)$/.test(p)?{ok:true}:JB[0];
+  if(/^\/driver\/admin\/jobs\//.test(p))return {ok:true,sent:0};
+  if(p==="/driver/admin/list")return L;
+  if(x=/^\/driver\/admin\/(\w+)\/review$/.exec(p)){var r=g(x[1]);r.status=b.status;r.reason=b.reason||"";sv();return r}
+  if(x=/^\/driver\/admin\/(\w+)$/.exec(p))return g(x[1]);
+  return {};
+}
+
+// ====== LIFF ======
+function initLiff(cb){
+  if(!LIFF_ID||location.hash==="#admin"){cb();return}
+  var s=document.createElement("script");s.src="https://static.line-scdn.net/liff/edge/2/sdk.js";
+  s.onload=function(){liff.init({liffId:LIFF_ID}).then(function(){
+    liffOk=true;if(!liff.isLoggedIn()){liff.login();return}
+    return liff.getProfile().then(function(p){profile=p;document.getElementById("who").textContent="👤 "+p.displayName;cb()});
+  }).catch(function(){cb()})};
+  s.onerror=function(){cb()};document.head.appendChild(s);
+}
+function boot(){
+  if(location.hash==="#admin"){document.getElementById("who").textContent="แอดมิน";admin();return}
+  var j=new URLSearchParams(location.search).get("job")||(/^#job=/.test(location.hash)?location.hash.slice(5):"");
+  api("GET","/driver/me").then(function(d){d.registered?(j&&d.status==="อนุมัติแล้ว"?jobDetail(j):home(d)):form()}).catch(function(x){app('<p>'+esc(x&&x.error||"เชื่อมต่อระบบไม่สำเร็จ กรุณาเปิดผ่านแอป LINE แล้วลองใหม่")+'</p>')});
+}
+
+// ====== ฟอร์มสมัคร ======
+function fld(f){
+  var t=f[2]||"txt",id='id="f_'+f[0]+'"',a='<label>'+f[1]+'</label>',h;
+  if(t==="sel")h=a+'<select '+id+' onchange="tg()"><option value="">เลือก…</option>'+f[3].map(function(o){return '<option>'+esc(o)+'</option>'}).join("")+'</select>';
+  else h=a+'<input '+id+' type="'+(t==="date"?"date":t==="tel"?"tel":"text")+'"'+(t==="num"?' inputmode="numeric" maxlength="'+f[3]+'"':"")+' autocomplete="off">';
+  return f[4]==="tr"?'<div id="trw" style="display:none">'+h+'</div>':h;
+}
+function form(note){
+  app((note||"")+SEC.map(function(s){return '<h2 style="margin-top:14px">'+s[0]+'</h2>'+s[1].map(fld).join("")}).join("")+
+  '<p class="note" style="margin-top:14px"><label style="display:flex;color:var(--text);font-size:13px"><input type="checkbox" id="cs">ข้าพเจ้ายินยอมให้บริษัทเก็บและใช้ข้อมูลส่วนบุคคลข้างต้น (รวมถึงเลขบัตรประชาชน ใบขับขี่ และบัญชีธนาคาร) เพื่อตรวจสอบคุณสมบัติและจ่ายค่าขนส่งเท่านั้น</label></p>'+
+  '<div class="err" id="err"></div><button class="btn p" onclick="submit()">ส่งใบสมัคร</button>');
+}
+function tg(){var v=document.getElementById("f_vehicle").value,w=document.getElementById("trw");if(w)w.style.display=v===TRAILER?"":"none"}
+function err(m){var e=document.getElementById("err");if(e)e.textContent=m||""}
+function idOk(s){if(!/^\d{13}$/.test(s))return false;var n=0;for(var i=0;i<12;i++)n+=+s[i]*(13-i);return (11-n%11)%10===+s[12]}
+function check(b){
+  var t=new Date();t=new Date(t-t.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  for(var s=0;s<SEC.length;s++)for(var j=0;j<SEC[s][1].length;j++){var f=SEC[s][1][j];if(f[4]==="tr"&&b.vehicle!==TRAILER)continue;if(!b[f[0]])return "กรุณากรอก: "+f[1]}
+  if(!/^0\d{8,9}$/.test(b.phone.replace(/[-\s]/g,"")))return "เบอร์โทรไม่ถูกต้อง";
+  if(!idOk(b.idCard))return "เลขบัตรประชาชนไม่ถูกต้อง";
+  if(!/^\d{10,15}$/.test(b.bankAcct))return "เลขที่บัญชีต้องเป็นตัวเลข 10–15 หลัก";
+  var ex=[["licenseExpiry","ใบขับขี่"],["actExpiry","พ.ร.บ."],["insExpiry","ประกันภัย"]];
+  for(var i=0;i<3;i++)if(b[ex[i][0]]<t)return ex[i][1]+"หมดอายุแล้ว";
+  if(!b.consent)return "กรุณาติ๊กยินยอมการเก็บและใช้ข้อมูลส่วนบุคคล";
+}
+function submit(){
+  var b={};
+  SEC.forEach(function(s){s[1].forEach(function(f){b[f[0]]=document.getElementById("f_"+f[0]).value.trim()})});
+  if(b.vehicle!==TRAILER)b.trailerPlate="";
+  b.consent=document.getElementById("cs").checked;
+  var e=check(b);if(e){err(e);return}
+  err("กำลังส่งข้อมูล…");
+  api("POST","/driver/register",b).then(home).catch(function(x){err(x&&x.error||"ส่งข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง")});
+}
+
+// ====== หน้าสถานะของคนขับ ======
+function home(d){
+  var n=esc(d.firstName+" "+d.lastName),v=esc(d.vehicle+" · "+d.plate+(d.trailerPlate?" / หาง "+d.trailerPlate:"")),h;
+  if(d.status==="อนุมัติแล้ว"){
+    h='<h2>✅ อนุมัติแล้ว</h2><p>'+n+'<br><span class="who">'+v+'</span></p><div style="text-align:center;border-top:1px solid var(--line);padding-top:14px"><div style="font-size:40px">'+(d.available?"🟢":"⚪")+'</div><b>'+(d.available?"พร้อมรับงาน":"ยังไม่พร้อมรับงาน")+'</b><p class="note">เปิดสถานะ “พร้อมรับงาน” เพื่อให้ทีมงานเห็นว่าคุณพร้อมรับมอบหมายงาน</p><button class="btn p" onclick="avail('+(d.available?0:1)+')">'+(d.available?"หยุดรับงาน":"เริ่มรับงาน")+'</button></div><button class="btn s" onclick="jobs()">📋 งานที่เปิดรับ</button><button class="btn s" onclick="myJobs()">🚚 งานของฉัน</button>';
+  }else if(d.status==="ไม่ผ่าน"){
+    h='<h2>❌ ใบสมัครไม่ผ่านการตรวจสอบ</h2><p>'+n+'</p><p class="note">เหตุผล: '+esc(d.reason||"-")+'</p><button class="btn p" onclick="form()">แก้ไขและส่งใหม่</button>';
+  }else{
+    h='<h2>⏳ รอตรวจสอบ</h2><p>'+n+'<br><span class="who">'+v+'</span></p><p class="note">ทีมงานกำลังตรวจสอบเอกสาร จะแจ้งผลทาง LINE เมื่อตรวจเสร็จ</p>';
+  }
+  app(h);
+}
+function avail(v){api("POST","/driver/availability",{available:v}).then(home).catch(function(x){alert(x&&x.error||"อัปเดตไม่สำเร็จ")})}
+
+// ====== หน้าแอดมิน (#admin) ======
+function loginHtml(m){return '<h2>เข้าสู่ระบบแอดมิน</h2><input id="pin" type="password" placeholder="PIN"><div class="err">'+esc(m||"")+'</div><button class="btn p" onclick="login()">เข้าสู่ระบบ</button>'}
+function admin(){app(loginHtml())}
+function login(){AK=document.getElementById("pin").value;if(!API_URL&&AK!==ADMIN_PIN){AK="";app(loginHtml("PIN ไม่ถูกต้อง"));return}adminLoad()}
+function adminLoad(){api("GET","/driver/admin/list",null,1).then(function(L){AL=L;adminList()}).catch(function(){AK="";app(loginHtml("PIN ไม่ถูกต้อง หรือเชื่อมต่อไม่ได้"))})}
+function adminList(){
+  var c={};AL.forEach(function(d){c[d.status]=(c[d.status]||0)+1});
+  var av=AL.filter(function(d){return d.available&&d.status==="อนุมัติแล้ว"}).length;
+  var L=AL.filter(function(d){return AF==="ทั้งหมด"||d.status===AF});
+  app('<h2>จัดการคนขับ ('+AL.length+')</h2><div class="who" style="margin-bottom:8px">รอตรวจสอบ '+(c["รอตรวจสอบ"]||0)+' · อนุมัติแล้ว '+(c["อนุมัติแล้ว"]||0)+' · พร้อมรับงานตอนนี้ '+av+'</div>'+
+  '<select onchange="AF=this.value;adminList()">'+["ทั้งหมด","รอตรวจสอบ","อนุมัติแล้ว","ไม่ผ่าน"].map(function(s){return '<option'+(s===AF?" selected":"")+'>'+s+'</option>'}).join("")+'</select>'+
+  (L.length?L.map(function(d){return '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="bk"><b>'+esc(d.firstName+" "+d.lastName)+'</b><span class="tag">'+esc(d.status)+(d.available&&d.status==="อนุมัติแล้ว"?" 🟢":"")+'</span></div><div class="who">'+esc(d.vehicle+" · "+d.plate+" · "+d.phone)+'</div><button class="btn s" onclick="det(\''+esc(d.id)+'\')">ดูรายละเอียด</button><div id="dt_'+esc(d.id)+'"></div></div>'}).join(""):'<p class="who">ไม่มีรายการ</p>')+
+  '<button class="btn s" onclick="adminLoad()">รีเฟรช</button><button class="btn p" onclick="adminJobs()">📦 งานรอคนขับ / ข้อเสนอราคา</button>');
+}
+function det(id){
+  api("GET","/driver/admin/"+id,null,1).then(function(b){
+    document.getElementById("dt_"+id).innerHTML='<div class="sum" style="margin-top:8px">'+SEC.map(function(s){return s[1].map(function(f){return b[f[0]]?'<div><span>'+f[1]+'</span><b>'+esc(b[f[0]])+'</b></div>':""}).join("")}).join("")+'</div>'+
+    '<input id="rs_'+id+'" placeholder="เหตุผล (กรณีไม่ผ่าน)" style="margin-top:8px"><div style="display:flex;gap:8px"><button class="btn p" onclick="rev(\''+id+'\',1)">อนุมัติ</button><button class="btn s" onclick="rev(\''+id+'\',0)">ไม่ผ่าน</button></div>';
+  }).catch(function(){alert("โหลดรายละเอียดไม่สำเร็จ")});
+}
+function rev(id,ok){
+  var r=document.getElementById("rs_"+id).value.trim();
+  if(!ok&&!r){alert("กรุณาใส่เหตุผลที่ไม่ผ่าน");return}
+  api("POST","/driver/admin/"+id+"/review",{status:ok?"อนุมัติแล้ว":"ไม่ผ่าน",reason:ok?"":r},1).then(adminLoad).catch(function(){alert("บันทึกไม่สำเร็จ")});
+}
+// ====== งานสำหรับคนขับ ======
+function money(n){return "฿"+Math.round(n).toLocaleString("th-TH")}
+function back(){api("GET","/driver/me").then(home)}
+function jobRow(j,x){return '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="bk"><b>'+esc(j.from)+' → '+esc(j.to)+'</b>'+(j.myOffer?'<span class="tag">เสนอ '+money(j.myOffer)+'</span>':'')+'</div><div class="who" style="line-height:1.6">'+esc(j.vehicle)+' · '+esc(j.cargo)+' · '+esc(j.weight)+' กก. · '+esc(j.km)+' กม.<br>นัดรับ '+esc(j.date)+' '+esc(j.time)+' น. · ประเมิน '+money(j.price)+(j.note?'<br>หมายเหตุ: '+esc(j.note):'')+'</div>'+(x||"")+'</div>'}
+function fail(x){app('<p>'+esc(x&&x.error||"เชื่อมต่อระบบไม่สำเร็จ")+'</p><button class="btn s" onclick="back()">กลับ</button>')}
+function jobs(){api("GET","/driver/jobs").then(function(L){
+  app('<h2>งานที่เปิดรับ</h2><p class="note">แสดงเฉพาะงานที่ตรงกับประเภทรถของคุณ</p>'+(L.length?L.map(function(j){return jobRow(j,'<button class="btn s" onclick="jobDetail(\''+esc(j.id)+'\')">ดูงาน / รับงาน / เสนอราคา</button>')}).join(""):'<p class="who">ยังไม่มีงานใหม่ในตอนนี้')+'<button class="btn s" onclick="back()">กลับ</button>');
+}).catch(fail)}
+function myJobs(){api("GET","/driver/my-jobs").then(function(L){
+  app('<h2>งานของฉัน</h2>'+(L.length?L.map(function(j){return jobRow(j,'<div class="sum" style="margin-top:6px"><div><span>ลูกค้า</span><b>'+esc(j.contact.name)+'</b></div><div><span>โทร</span><b><a href="tel:'+esc(j.contact.phone)+'">'+esc(j.contact.phone)+'</a></b></div><div><span>ราคาตกลง</span><b>'+money(j.contact.agreedPrice||j.price)+'</b></div></div>')}).join(""):'<p class="who">ยังไม่มีงานที่รับ</p>')+'<button class="btn s" onclick="back()">กลับ</button>');
+}).catch(fail)}
+function jobDetail(id){api("GET","/driver/jobs/"+id).then(function(j){
+  var x=j.mine?'<p class="note">คุณรับงานนี้แล้ว ดูข้อมูลลูกค้าได้ที่ “งานของฉัน”</p>':
+   '<button class="btn p" onclick="acceptJob(\''+esc(id)+'\')">รับงานราคาประเมิน '+money(j.price)+'</button><label>หรือเสนอราคาของคุณ (บาท)</label><input id="op" type="number" inputmode="numeric" value="'+esc(j.myOffer||"")+'"><input id="on" placeholder="หมายเหตุ (ไม่บังคับ)" style="margin-top:8px"><button class="btn s" onclick="sendOffer(\''+esc(id)+'\')">ส่งข้อเสนอราคา</button>';
+  app('<h2>งาน '+esc(j.id)+'</h2>'+jobRow(j,x)+'<div class="err" id="err"></div><button class="btn s" onclick="back()">กลับ</button>');
+}).catch(fail)}
+function acceptJob(id){api("POST","/driver/jobs/"+id+"/accept").then(function(){app('<h2>✅ รับงานแล้ว</h2><p class="note">ดูข้อมูลติดต่อลูกค้าได้ที่ “งานของฉัน”</p><button class="btn p" onclick="myJobs()">งานของฉัน</button>')}).catch(function(x){err(x&&x.error||"ไม่สำเร็จ")})}
+function sendOffer(id){
+  var pr=+document.getElementById("op").value;if(!(pr>0)){err("กรุณาใส่ราคาที่เสนอ");return}
+  api("POST","/driver/jobs/"+id+"/offer",{price:pr,note:document.getElementById("on").value.trim()}).then(function(){app('<h2>📨 ส่งข้อเสนอแล้ว</h2><p class="note">ทีมงานจะแจ้งผลทาง LINE หากคุณได้รับเลือก</p><button class="btn s" onclick="back()">กลับ</button>')}).catch(function(x){err(x&&x.error||"ไม่สำเร็จ")});
+}
+// ====== แอดมิน: งานรอคนขับ + ข้อเสนอราคา ======
+function adminJobs(){api("GET","/driver/admin/jobs",null,1).then(function(L){
+  app('<h2>งานรอคนขับ ('+L.length+')</h2>'+(L.length?L.map(function(j){
+    return jobRow(j,'<div class="who">ลูกค้า: '+esc(j.customer)+'</div>'+
+    (j.offers.length?j.offers.map(function(o){return '<div class="bk" style="margin-top:6px"><span>'+esc(o.name+" · "+o.plate)+' <b>'+money(o.price)+'</b>'+(o.note?'<br><span class="who">'+esc(o.note)+'</span>':'')+'</span><button class="btn p" style="width:auto;margin:0;padding:8px 12px" onclick="assign(\''+esc(j.id)+'\',\''+esc(o.driverId)+'\','+(+o.price)+')">เลือก</button></div>'}).join(""):'<div class="who">ยังไม่มีข้อเสนอราคา</div>')+
+    '<button class="btn s" onclick="renotify(\''+esc(j.id)+'\')">ส่งแจ้งเตือนคนขับอีกครั้ง</button>')}).join(""):'<p class="who">ไม่มีงานรอคนขับ (งานจะขึ้นที่นี่เมื่อแอดมินกด “ยืนยันแล้ว” ที่คิวลูกค้า)</p>')+'<button class="btn s" onclick="adminLoad()">กลับ</button>');
+}).catch(function(){alert("โหลดงานไม่สำเร็จ")})}
+function assign(id,did,pr){if(!confirm("มอบหมายงานนี้ให้คนขับคนนี้?"))return;api("POST","/driver/admin/jobs/"+id+"/assign",{driverId:did,price:pr},1).then(adminJobs).catch(function(x){alert(x&&x.error||"ไม่สำเร็จ")})}
+function renotify(id){api("POST","/driver/admin/jobs/"+id+"/notify",{},1).then(function(r){alert("ส่งแจ้งเตือนถึงคนขับ "+(r.sent||0)+" คน")}).catch(function(){alert("ไม่สำเร็จ")})}
+initLiff(boot);
+</script>
+</body>
+</html>
