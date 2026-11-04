@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>จองคิวขนส่งสินค้า</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 --bg:#f4f6f8;--card:#fff;--text:#1b2430;--muted:#6b7684;--line:#dfe4ea;--brand:#06c755;--brandtxt:#fff;--sel:#e8f9ef}
@@ -45,6 +46,7 @@ input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);borde
 .bk{display:flex;justify-content:space-between;gap:8px}
 .tag{font-size:12px;padding:2px 8px;border-radius:99px;background:var(--sel);color:var(--brand);font-weight:700;white-space:nowrap}
 .empty{text-align:center;color:var(--muted);padding:30px 0}
+#qr img{max-width:100%;height:auto;border-radius:8px;background:#fff;padding:6px}
 .ok{text-align:center;padding:10px 0}.ok .big{font-size:48px}
 .link{background:none;border:0;color:#e5484d;font:inherit;font-size:13px;padding:6px 0}
 </style>
@@ -94,7 +96,7 @@ function initLiff(){
     if(!liff.isLoggedIn()){liff.login();return}
     return liff.getProfile().then(function(p){
       profile=p;S.f.name=S.f.name||p.displayName;
-      document.getElementById("who").textContent="👤 "+p.displayName;render();
+      document.getElementById("who").textContent="👤 "+p.displayName;render();var pq=new URLSearchParams(location.search).get("pay");if(pq&&API_URL)payOpen(pq);
     });
   }).catch(function(e){console.warn("LIFF",e)});
 }
@@ -188,7 +190,7 @@ function renderList(a){
   a.innerHTML=l.length?l.map(function(b){
     return '<div class="card"><div class="bk"><b>'+esc(b.emoji+" "+b.vehicle)+'</b><span class="tag">'+esc(b.status)+'</span></div>'+
     '<div class="who" style="margin-top:6px;line-height:1.6">รหัส '+esc(b.id)+'<br>'+esc(b.from)+' → '+esc(b.to)+'<br>'+esc(fmtDate(b.date))+' เวลา '+esc(b.time)+' น. · '+baht(b.price)+'</div>'+
-    (b.status==="รอยืนยัน"?'<button class="link" onclick="cancelB(\''+b.id+'\')">ยกเลิกคิว</button>':'')+'</div>'}).join(""):
+    payBtn(b)+(b.status==="รอยืนยัน"?'<button class="link" onclick="cancelB(\''+b.id+'\')">ยกเลิกคิว</button>':'')+'</div>'}).join(""):
     '<div class="empty">ยังไม่มีรายการจอง</div>';
   bar('<button class="p" onclick="tab(1);reset()">+ จองคิวใหม่</button>');
 }
@@ -200,6 +202,59 @@ function cancelB(id){
 }
 // ส่ง LIFF access token ให้ backend ตรวจสอบตัวตนกับ LINE (backend ไม่เชื่อ userId ที่ client ส่งมาเอง)
 function authH(){var h={"Content-Type":"application/json"};try{if(liffOk)h.Authorization="Bearer "+liff.getAccessToken()}catch(e){}return h}
+// ====== ชำระเงิน (พร้อมเพย์ QR) ใช้ได้เมื่อตั้ง API_URL แล้วเท่านั้น ======
+function pf(m,p,b){return fetch(API_URL+p,{method:m,headers:authH(),body:b?JSON.stringify(b):undefined}).then(function(r){return r.json().then(function(j){if(!r.ok)throw j;return j})})}
+function payBtn(b){
+  if(!API_URL||!b.finalPrice||b.status==="ยกเลิก"||b.status==="ปฏิเสธ")return "";
+  var t=b.payStatus==="ยืนยันแล้ว"?"✅ ชำระเงินแล้ว":b.payStatus==="รอตรวจสอบ"?"⏳ รอตรวจสอบการโอน":"💳 ชำระเงิน "+baht(b.finalPrice);
+  return '<button class="slot" style="width:auto;margin-top:8px;padding:8px 14px" onclick="payOpen(\''+esc(b.id)+'\')">'+t+'</button>';
+}
+function payOpen(id){
+  S.tab=2;document.getElementById("t1").className="";document.getElementById("t2").className="on";
+  pf("GET","/pay/"+id).then(function(p){payView(id,p)}).catch(function(x){alert((x&&x.error)||"โหลดข้อมูลชำระเงินไม่สำเร็จ กรุณาเปิดผ่านแอป LINE")});
+}
+function payView(id,p){
+  var h='<div class="card"><h2>💳 ชำระเงิน คิว '+esc(id)+'</h2><div class="sum"><div><span>เส้นทาง</span><b>'+esc(p.from)+' → '+esc(p.to)+'</b></div><div><span>ยอดชำระ</span><b style="color:var(--brand);font-size:20px">'+baht(p.amount)+'</b></div></div></div>',pay=false;
+  if(p.status==="ยืนยันแล้ว")h+='<div class="card ok"><div class="big">✅</div><h2>ชำระเงินเรียบร้อย</h2><p class="who">ขอบคุณที่ใช้บริการ</p></div>';
+  else if(p.status==="รอตรวจสอบ")h+='<div class="card ok"><div class="big">⏳</div><h2>รอแอดมินตรวจสอบการโอน</h2><p class="who">เมื่อตรวจสอบแล้วจะแจ้งผลทาง LINE</p></div>';
+  else{pay=true;
+    h+='<div class="card" style="text-align:center">'+(p.status==="ปฏิเสธ"?'<p class="err">การแจ้งโอนครั้งก่อนไม่ผ่าน: '+esc(p.reason||"-")+'</p>':'')+'<h2>สแกน QR พร้อมเพย์</h2><div id="qr"></div><p class="who">'+esc(p.accountName||"")+'<br>โอนตามยอด '+baht(p.amount)+' · กดค้างที่ QR เพื่อบันทึกรูป แล้วเปิดแอปธนาคารเลือกสแกนจากรูป</p></div>'+
+    '<div class="card"><h2>แจ้งการโอน</h2><label>วัน-เวลาที่โอน</label><input id="pt" type="datetime-local"><label>เลขอ้างอิงรายการ (ถ้ามี)</label><input id="pr" placeholder="เลขอ้างอิงในสลิป"><div class="err" id="perr"></div></div>';
+  }
+  document.getElementById("app").innerHTML=h;
+  if(pay){var q=document.getElementById("qr");try{if(!p.payload)throw 0;var c=qrcode(0,"M");c.addData(p.payload);c.make();q.innerHTML=c.createImgTag(5,8)}catch(e){q.textContent="แสดง QR ไม่ได้ กรุณาติดต่อทีมงาน"}}
+  bar('<button class="s" onclick="tab(2)">กลับ</button>'+(pay?'<button class="p" onclick="payNotify(\''+esc(id)+'\')">แจ้งโอนแล้ว</button>':''));
+}
+function payNotify(id){
+  var t=document.getElementById("pt").value,e=document.getElementById("perr");
+  if(!t){e.textContent="กรุณาระบุวัน-เวลาที่โอน";return}
+  e.textContent="กำลังส่ง...";
+  pf("POST","/pay/"+id+"/notify",{paidAt:t.replace("T"," "),ref:document.getElementById("pr").value.trim()}).then(function(){payOpen(id)}).catch(function(x){e.textContent=(x&&x.error)||"ส่งไม่สำเร็จ"});
+}
+// แอดมิน: ตั้งราคาสุดท้าย + ตรวจสอบการโอน
+function payCtl(b){
+  if(!API_URL||b.status==="ยกเลิก"||b.status==="ปฏิเสธ")return "";
+  var st=b.payStatus==="ยืนยันแล้ว"?"✅ ชำระแล้ว "+baht(b.finalPrice):b.payStatus==="รอตรวจสอบ"?"⏳ รอตรวจสอบการโอน "+baht(b.finalPrice):b.finalPrice?"รอลูกค้าชำระ "+baht(b.finalPrice):"ยังไม่ตั้งราคาสุดท้าย";
+  var h='<div class="who" style="margin-top:6px">💳 '+st+'</div>';
+  if(b.payStatus==="ยืนยันแล้ว"||b.payStatus==="รอตรวจสอบ")return h;
+  return h+'<div class="row" style="margin-top:6px"><input id="fp_'+esc(b.id)+'" type="number" inputmode="numeric" placeholder="ราคาสุดท้าย (บาท)" value="'+esc(b.finalPrice||b.price)+'"><button class="slot" onclick="setPrice(\''+esc(b.id)+'\')">ตั้งราคา + ขอชำระเงิน</button></div>';
+}
+function setPrice(id){
+  var v=+document.getElementById("fp_"+id).value;if(!(v>0)){alert("กรุณาใส่ราคา");return}
+  if(!confirm("ส่งคำขอชำระเงิน "+baht(v)+" ให้ลูกค้า?"))return;
+  api("/bookings/"+id+"/price",{method:"POST",body:JSON.stringify({price:v})}).then(adminLoad).catch(function(){alert("ตั้งราคาไม่สำเร็จ (อาจมีการแจ้งโอนแล้ว)")});
+}
+function adminPays(){
+  api("/payments/pending").then(function(L){
+    document.getElementById("app").innerHTML='<div class="card"><h2>💳 รอตรวจสอบการโอน ('+L.length+')</h2><div class="who">เทียบยอดและเวลากับรายการเข้าบัญชีของบริษัทก่อนกดยืนยัน</div></div>'+(L.length?L.map(function(x){
+      return '<div class="card"><div class="bk"><b>'+esc(x.name)+'</b><span class="tag">'+baht(x.amount)+'</span></div><div class="who" style="line-height:1.6">คิว '+esc(x.bookingId)+' · '+esc(x.from)+' → '+esc(x.to)+'<br>เวลาโอน '+esc(x.paidAt)+(x.ref?'<br>อ้างอิง '+esc(x.ref):'')+'</div><input id="pr_'+esc(x.id)+'" placeholder="เหตุผล (กรณีไม่ผ่าน)" style="margin-top:8px"><div class="row" style="margin-top:8px"><button class="slot" onclick="payRev(\''+esc(x.id)+'\',true)">✅ ยืนยันรับเงินแล้ว</button><button class="slot" onclick="payRev(\''+esc(x.id)+'\',false)">❌ ไม่ผ่าน</button></div></div>'}).join(""):'<div class="empty">ไม่มีรายการรอตรวจสอบ</div>');
+    bar('<button class="s" onclick="adminLoad()">กลับ</button>');
+  }).catch(function(){alert("โหลดไม่สำเร็จ")});
+}
+function payRev(id,ok){
+  var r=document.getElementById("pr_"+id).value.trim();if(!ok&&!r){alert("กรุณาใส่เหตุผล");return}
+  api("/payments/"+id+"/review",{method:"POST",body:JSON.stringify({ok:ok,reason:r})}).then(adminPays).catch(function(){alert("ไม่สำเร็จ (อาจถูกตรวจสอบไปแล้ว)")});
+}
 // ====== หน้าแอดมิน ======
 var AK="",AF="ทั้งหมด",AL=[];
 var STS=["ทั้งหมด","รอยืนยัน","ยืนยันแล้ว","กำลังขนส่ง","เสร็จสิ้น","ปฏิเสธ","ยกเลิก"];
@@ -233,8 +288,8 @@ function renderAdmin(){
   (list.length?list.map(function(b){
     return '<div class="card"><div class="bk"><b>'+esc(b.emoji+" "+b.vehicle)+'</b><span class="tag">'+esc(b.status)+'</span></div>'+
     '<div class="who" style="margin-top:6px;line-height:1.7">รหัส '+esc(b.id)+' · '+esc(fmtDate(b.date))+' '+esc(b.time)+' น.<br>👤 '+esc(b.name)+' · <a href="tel:'+esc(b.phone)+'">'+esc(b.phone)+'</a><br>'+esc(b.from)+' → '+esc(b.to)+'<br>'+esc(b.cargo)+' · '+esc(b.weight)+' กก. · '+esc(b.km)+' กม. · '+baht(b.price)+(b.note?'<br>📝 '+esc(b.note):'')+'</div>'+
-    (NEXT[b.status]||[]).map(function(s){return '<button class="slot" style="width:auto;margin:8px 6px 0 0;padding:8px 14px" onclick="setSt(\''+esc(b.id)+'\',\''+s+'\')">'+s+'</button>'}).join("")+'</div>'}).join(""):'<div class="empty">ไม่มีรายการ</div>');
-  bar('<button class="s" onclick="adminLoad()">รีเฟรช</button><button class="s" onclick="logout()">ออกจากระบบ</button>');
+    (NEXT[b.status]||[]).map(function(s){return '<button class="slot" style="width:auto;margin:8px 6px 0 0;padding:8px 14px" onclick="setSt(\''+esc(b.id)+'\',\''+s+'\')">'+s+'</button>'}).join("")+payCtl(b)+'</div>'}).join(""):'<div class="empty">ไม่มีรายการ</div>');
+  bar('<button class="s" onclick="adminLoad()">รีเฟรช</button><button class="s" onclick="adminPays()">💳 ตรวจสอบการโอน</button><button class="s" onclick="logout()">ออกจากระบบ</button>');
 }
 if(location.hash==="#admin")document.getElementById("t3").style.display="";
 render();
