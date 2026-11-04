@@ -39,16 +39,18 @@ var TRAILER="รถพ่วง/เทรลเลอร์";
 var VEH=["รถกระบะ 4 ล้อ","กระบะคอกหรือตู้ทึบ","รถ 6 ล้อ","รถ 10 ล้อ",TRAILER,"รถห้องเย็น"];
 var BANKS=["กสิกรไทย","ไทยพาณิชย์","กรุงเทพ","กรุงไทย","กรุงศรีอยุธยา","ทหารไทยธนชาต (ttb)","ออมสิน","ธ.ก.ส.","ซีไอเอ็มบี ไทย","ยูโอบี","เกียรตินาคินภัทร","ทิสโก้"];
 var INS=["ชั้น 1","ชั้น 2+","ชั้น 3+","ชั้น 2","ชั้น 3"];
+// รายชื่อบริษัทประกันภัย (แก้ไข/เพิ่มได้ตามต้องการ) ใช้ทั้งช่องประกันและ พ.ร.บ.
+var CO=["วิริยะประกันภัย","ทิพยประกันภัย","กรุงเทพประกันภัย","สินมั่นคงประกันภัย","เมืองไทยประกันภัย","ไทยศรีประกันภัย","ไทยประกันภัย","อาคเนย์ประกันภัย","คุ้มภัยโตเกียวมารีนประกันภัย","ไทยเศรษฐกิจประกันภัย","นวกิจประกันภัย","แอลเอ็มจีประกันภัย","เจพีประกันภัย","ชับบ์สามัคคีประกันภัย","อื่น ๆ"];
 // [key, ป้ายชื่อ, ชนิด(txt|tel|num|date|sel), ตัวเลือก/ความยาว, "tr"=เฉพาะรถพ่วง]
 var SEC=[
 ["1. ข้อมูลส่วนตัว",[["firstName","ชื่อ"],["lastName","นามสกุล"],["phone","เบอร์โทรศัพท์","tel"],["idCard","เลขบัตรประชาชน 13 หลัก","num",13]]],
 ["2. ใบขับขี่",[["licenseNo","เลขที่ใบขับขี่"],["licenseExpiry","วันหมดอายุใบขับขี่","date"]]],
 ["3. รถที่ใช้ขนส่ง",[["vehicle","ประเภทรถ","sel",VEH],["plate","เลขทะเบียนรถ"],["trailerPlate","เลขทะเบียนหาง","txt",0,"tr"]]],
-["4. พ.ร.บ. รถยนต์",[["actCompany","บริษัทที่ทำ พ.ร.บ."],["actNo","เลขที่กรมธรรม์ พ.ร.บ."],["actExpiry","วันหมดอายุ พ.ร.บ.","date"]]],
-["5. ประกันรถยนต์",[["insCompany","บริษัทประกัน"],["insType","ประเภทประกัน","sel",INS],["insNo","เลขที่กรมธรรม์"],["insExpiry","วันหมดอายุประกัน","date"]]],
+["4. พ.ร.บ. รถยนต์",[["actCompany","บริษัทที่ทำ พ.ร.บ.","sel",CO],["actNo","เลขที่กรมธรรม์ พ.ร.บ."],["actExpiry","วันหมดอายุ พ.ร.บ.","date"]]],
+["5. ประกันรถยนต์",[["insCompany","บริษัทประกัน","sel",CO],["insType","ประเภทประกัน","sel",INS],["insNo","เลขที่กรมธรรม์"],["insExpiry","วันหมดอายุประกัน","date"]]],
 ["6. บัญชีรับเงิน",[["bankName","ธนาคาร","sel",BANKS],["bankAcct","เลขที่บัญชี","num",15],["bankAcctName","ชื่อบัญชี"]]]
 ];
-var profile=null,liffOk=false,AK="",AL=[],AF="ทั้งหมด";
+var profile=null,liffOk=false,AK="",AL=[],AF="ทั้งหมด",RATE_PCT=10;
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
 function app(h){document.getElementById("app").className="";document.getElementById("app").innerHTML=h}
 
@@ -67,8 +69,9 @@ function mock(p,b){
   if(p==="/driver/me")return g("me")||{registered:false};
   if(p==="/driver/register"){L=L.filter(function(x){return x.id!=="me"});L.push(Object.assign({registered:true,id:"me",status:"รอตรวจสอบ",available:0},b));sv();return g("me")}
   if(p==="/driver/availability"){x=g("me");x.available=b.available?1:0;sv();return x}
-  var JB=[{id:"BK000001",vehicle:"รถ 6 ล้อ",from:"สมุทรปราการ",to:"ขอนแก่น",cargo:"สินค้าทั่วไป",weight:3000,km:450,date:"2026-11-05",time:"09:00",price:11700,customer:"คุณลูกค้า",offers:[{driverId:"x",name:"สมชาย ใจดี",plate:"1กข 1234",price:10500,note:""}]}];
+  var JB=[{id:"BK000001",vehicle:"รถ 6 ล้อ",from:"สมุทรปราการ",to:"ขอนแก่น",cargo:"สินค้าทั่วไป",weight:3000,km:450,date:"2026-11-05",time:"09:00",price:11700,rate:10,commission:1170,net:10530,customer:"คุณลูกค้า",offers:[{driverId:"x",name:"สมชาย ใจดี",plate:"1กข 1234",price:10500,note:""}]}];
   if(p==="/driver/jobs"||p==="/driver/admin/jobs")return JB;
+  if(p==="/driver/earnings")return {rate:10,total:{count:1,gross:11700,commission:1170,net:10530},pendingCount:0,pendingNet:0,done:[Object.assign({},JB[0],{gross:11700})]};
   if(p==="/driver/my-jobs")return [];
   if(/^\/driver\/jobs\//.test(p))return /(accept|offer)$/.test(p)?{ok:true}:JB[0];
   if(/^\/driver\/admin\/jobs\//.test(p))return {ok:true,sent:0};
@@ -91,22 +94,27 @@ function initLiff(cb){
 function boot(){
   if(location.hash==="#admin"){document.getElementById("who").textContent="แอดมิน";admin();return}
   var j=new URLSearchParams(location.search).get("job")||(/^#job=/.test(location.hash)?location.hash.slice(5):"");
-  api("GET","/driver/me").then(function(d){d.registered?(j&&d.status==="อนุมัติแล้ว"?jobDetail(j):home(d)):form()}).catch(function(x){app('<p>'+esc(x&&x.error||"เชื่อมต่อระบบไม่สำเร็จ กรุณาเปิดผ่านแอป LINE แล้วลองใหม่")+'</p>')});
+  api("GET","/driver/me").then(function(d){RATE_PCT=d.commissionPct||RATE_PCT;d.registered?(j&&d.status==="อนุมัติแล้ว"?jobDetail(j):home(d)):form()}).catch(function(x){app('<p>'+esc(x&&x.error||"เชื่อมต่อระบบไม่สำเร็จ กรุณาเปิดผ่านแอป LINE แล้วลองใหม่")+'</p>')});
 }
 
 // ====== ฟอร์มสมัคร ======
 function fld(f){
   var t=f[2]||"txt",id='id="f_'+f[0]+'"',a='<label>'+f[1]+'</label>',h;
-  if(t==="sel")h=a+'<select '+id+' onchange="tg()"><option value="">เลือก…</option>'+f[3].map(function(o){return '<option>'+esc(o)+'</option>'}).join("")+'</select>';
+  if(t==="sel")h=a+'<select '+id+' onchange="tg()"><option value="">เลือก…</option>'+f[3].map(function(o){return '<option>'+esc(o)+'</option>'}).join("")+'</select>'+(f[3]===CO?'<input id="f_'+f[0]+'_o" placeholder="ระบุชื่อบริษัท" style="display:none;margin-top:8px">':"");
   else h=a+'<input '+id+' type="'+(t==="date"?"date":t==="tel"?"tel":"text")+'"'+(t==="num"?' inputmode="numeric" maxlength="'+f[3]+'"':"")+' autocomplete="off">';
   return f[4]==="tr"?'<div id="trw" style="display:none">'+h+'</div>':h;
 }
 function form(note){
   app((note||"")+SEC.map(function(s){return '<h2 style="margin-top:14px">'+s[0]+'</h2>'+s[1].map(fld).join("")}).join("")+
-  '<p class="note" style="margin-top:14px"><label style="display:flex;color:var(--text);font-size:13px"><input type="checkbox" id="cs">ข้าพเจ้ายินยอมให้บริษัทเก็บและใช้ข้อมูลส่วนบุคคลข้างต้น (รวมถึงเลขบัตรประชาชน ใบขับขี่ และบัญชีธนาคาร) เพื่อตรวจสอบคุณสมบัติและจ่ายค่าขนส่งเท่านั้น</label></p>'+
+  commissionBox()+'<p class="note" style="margin-top:14px"><label style="display:flex;color:var(--text);font-size:13px"><input type="checkbox" id="cs">ข้าพเจ้ายินยอมให้บริษัทเก็บและใช้ข้อมูลส่วนบุคคลข้างต้น (รวมถึงเลขบัตรประชาชน ใบขับขี่ และบัญชีธนาคาร) เพื่อตรวจสอบคุณสมบัติและจ่ายค่าขนส่งเท่านั้น</label></p>'+
   '<div class="err" id="err"></div><button class="btn p" onclick="submit()">ส่งใบสมัคร</button>');
 }
-function tg(){var v=document.getElementById("f_vehicle").value,w=document.getElementById("trw");if(w)w.style.display=v===TRAILER?"":"none"}
+function commissionBox(){
+  var r=RATE_PCT,c=Math.round(10000*r/100);
+  return '<div class="note" style="margin-top:14px;padding:10px;border:1px solid var(--line);border-radius:10px"><b>💰 เงื่อนไขค่าตอบแทน</b><br>บริษัทหักค่าคอมมิชชั่น <b>'+r+'%</b> จากค่าบริการของแต่ละงาน คนขับได้รับสุทธิ = ค่าบริการ − ค่าคอมมิชชั่น เช่น ค่าบริการ '+money(10000)+' หัก '+money(c)+' คุณได้รับสุทธิ '+money(10000-c)+'<br>ทุกงานที่เปิดรับจะแสดงอัตราค่าคอมมิชชั่นและยอดสุทธิก่อนคุณจะรับงาน<label style="display:flex;color:var(--text);font-size:13px;margin-top:8px"><input type="checkbox" id="ck">ข้าพเจ้าได้อ่านและรับทราบเงื่อนไขการหักค่าคอมมิชชั่นข้างต้น</label></div>';
+}
+function tg(){var v=document.getElementById("f_vehicle").value,w=document.getElementById("trw");if(w)w.style.display=v===TRAILER?"":"none";
+  ["actCompany","insCompany"].forEach(function(k){var s=document.getElementById("f_"+k),o=document.getElementById("f_"+k+"_o");if(s&&o)o.style.display=s.value==="อื่น ๆ"?"":"none"})}
 function err(m){var e=document.getElementById("err");if(e)e.textContent=m||""}
 function idOk(s){if(!/^\d{13}$/.test(s))return false;var n=0;for(var i=0;i<12;i++)n+=+s[i]*(13-i);return (11-n%11)%10===+s[12]}
 function check(b){
@@ -117,13 +125,16 @@ function check(b){
   if(!/^\d{10,15}$/.test(b.bankAcct))return "เลขที่บัญชีต้องเป็นตัวเลข 10–15 หลัก";
   var ex=[["licenseExpiry","ใบขับขี่"],["actExpiry","พ.ร.บ."],["insExpiry","ประกันภัย"]];
   for(var i=0;i<3;i++)if(b[ex[i][0]]<t)return ex[i][1]+"หมดอายุแล้ว";
+  if(!b.ackCommission)return "กรุณาติ๊กรับทราบเงื่อนไขการหักค่าคอมมิชชั่น";
   if(!b.consent)return "กรุณาติ๊กยินยอมการเก็บและใช้ข้อมูลส่วนบุคคล";
 }
 function submit(){
   var b={};
   SEC.forEach(function(s){s[1].forEach(function(f){b[f[0]]=document.getElementById("f_"+f[0]).value.trim()})});
   if(b.vehicle!==TRAILER)b.trailerPlate="";
+  ["actCompany","insCompany"].forEach(function(k){if(b[k]==="อื่น ๆ"){var o=document.getElementById("f_"+k+"_o");b[k]=o?o.value.trim():""}});
   b.consent=document.getElementById("cs").checked;
+  b.ackCommission=document.getElementById("ck").checked;
   var e=check(b);if(e){err(e);return}
   err("กำลังส่งข้อมูล…");
   api("POST","/driver/register",b).then(home).catch(function(x){err(x&&x.error||"ส่งข้อมูลไม่สำเร็จ ลองใหม่อีกครั้ง")});
@@ -133,7 +144,7 @@ function submit(){
 function home(d){
   var n=esc(d.firstName+" "+d.lastName),v=esc(d.vehicle+" · "+d.plate+(d.trailerPlate?" / หาง "+d.trailerPlate:"")),h;
   if(d.status==="อนุมัติแล้ว"){
-    h='<h2>✅ อนุมัติแล้ว</h2><p>'+n+'<br><span class="who">'+v+'</span></p><div style="text-align:center;border-top:1px solid var(--line);padding-top:14px"><div style="font-size:40px">'+(d.available?"🟢":"⚪")+'</div><b>'+(d.available?"พร้อมรับงาน":"ยังไม่พร้อมรับงาน")+'</b><p class="note">เปิดสถานะ “พร้อมรับงาน” เพื่อให้ทีมงานเห็นว่าคุณพร้อมรับมอบหมายงาน</p><button class="btn p" onclick="avail('+(d.available?0:1)+')">'+(d.available?"หยุดรับงาน":"เริ่มรับงาน")+'</button></div><button class="btn s" onclick="jobs()">📋 งานที่เปิดรับ</button><button class="btn s" onclick="myJobs()">🚚 งานของฉัน</button>';
+    h='<h2>✅ อนุมัติแล้ว</h2><p>'+n+'<br><span class="who">'+v+'</span></p><div style="text-align:center;border-top:1px solid var(--line);padding-top:14px"><div style="font-size:40px">'+(d.available?"🟢":"⚪")+'</div><b>'+(d.available?"พร้อมรับงาน":"ยังไม่พร้อมรับงาน")+'</b><p class="note">เปิดสถานะ “พร้อมรับงาน” เพื่อให้ทีมงานเห็นว่าคุณพร้อมรับมอบหมายงาน</p><button class="btn p" onclick="avail('+(d.available?0:1)+')">'+(d.available?"หยุดรับงาน":"เริ่มรับงาน")+'</button></div><button class="btn s" onclick="jobs()">📋 งานที่เปิดรับ</button><button class="btn s" onclick="myJobs()">🚚 งานของฉัน</button><button class="btn s" onclick="earn()">💰 รายได้ของฉัน</button>';
   }else if(d.status==="ไม่ผ่าน"){
     h='<h2>❌ ใบสมัครไม่ผ่านการตรวจสอบ</h2><p>'+n+'</p><p class="note">เหตุผล: '+esc(d.reason||"-")+'</p><button class="btn p" onclick="form()">แก้ไขและส่งใหม่</button>';
   }else{
@@ -171,7 +182,7 @@ function rev(id,ok){
 // ====== งานสำหรับคนขับ ======
 function money(n){return "฿"+Math.round(n).toLocaleString("th-TH")}
 function back(){api("GET","/driver/me").then(home)}
-function jobRow(j,x){return '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="bk"><b>'+esc(j.from)+' → '+esc(j.to)+'</b>'+(j.myOffer?'<span class="tag">เสนอ '+money(j.myOffer)+'</span>':'')+'</div><div class="who" style="line-height:1.6">'+esc(j.vehicle)+' · '+esc(j.cargo)+' · '+esc(j.weight)+' กก. · '+esc(j.km)+' กม.<br>นัดรับ '+esc(j.date)+' '+esc(j.time)+' น. · ประเมิน '+money(j.price)+(j.note?'<br>หมายเหตุ: '+esc(j.note):'')+'</div>'+(x||"")+'</div>'}
+function jobRow(j,x){return '<div style="border-top:1px solid var(--line);margin-top:12px;padding-top:10px"><div class="bk"><b>'+esc(j.from)+' → '+esc(j.to)+'</b>'+(j.myOffer?'<span class="tag">เสนอ '+money(j.myOffer)+'</span>':'')+'</div><div class="who" style="line-height:1.6">'+esc(j.vehicle)+' · '+esc(j.cargo)+' · '+esc(j.weight)+' กก. · '+esc(j.km)+' กม.<br>นัดรับ '+esc(j.date)+' '+esc(j.time)+' น. · ประเมิน '+money(j.price)+(j.net!=null?'<br>หักค่าคอมมิชชั่น '+j.rate+'% (−'+money(j.commission)+') · <b>สุทธิประมาณ '+money(j.net)+'</b>':'')+(j.note?'<br>หมายเหตุ: '+esc(j.note):'')+'</div>'+(x||"")+'</div>'}
 function fail(x){app('<p>'+esc(x&&x.error||"เชื่อมต่อระบบไม่สำเร็จ")+'</p><button class="btn s" onclick="back()">กลับ</button>')}
 function jobs(){api("GET","/driver/jobs").then(function(L){
   app('<h2>งานที่เปิดรับ</h2><p class="note">แสดงเฉพาะงานที่ตรงกับประเภทรถของคุณ</p>'+(L.length?L.map(function(j){return jobRow(j,'<button class="btn s" onclick="jobDetail(\''+esc(j.id)+'\')">ดูงาน / รับงาน / เสนอราคา</button>')}).join(""):'<p class="who">ยังไม่มีงานใหม่ในตอนนี้')+'<button class="btn s" onclick="back()">กลับ</button>');
@@ -180,8 +191,8 @@ function myJobs(){api("GET","/driver/my-jobs").then(function(L){
   app('<h2>งานของฉัน</h2>'+(L.length?L.map(function(j){return jobRow(j,'<div class="sum" style="margin-top:6px"><div><span>ลูกค้า</span><b>'+esc(j.contact.name)+'</b></div><div><span>โทร</span><b><a href="tel:'+esc(j.contact.phone)+'">'+esc(j.contact.phone)+'</a></b></div><div><span>ราคาตกลง</span><b>'+money(j.contact.agreedPrice||j.price)+'</b></div></div>')}).join(""):'<p class="who">ยังไม่มีงานที่รับ</p>')+'<button class="btn s" onclick="back()">กลับ</button>');
 }).catch(fail)}
 function jobDetail(id){api("GET","/driver/jobs/"+id).then(function(j){
-  var x=j.mine?'<p class="note">คุณรับงานนี้แล้ว ดูข้อมูลลูกค้าได้ที่ “งานของฉัน”</p>':
-   '<button class="btn p" onclick="acceptJob(\''+esc(id)+'\')">รับงานราคาประเมิน '+money(j.price)+'</button><label>หรือเสนอราคาของคุณ (บาท)</label><input id="op" type="number" inputmode="numeric" value="'+esc(j.myOffer||"")+'"><input id="on" placeholder="หมายเหตุ (ไม่บังคับ)" style="margin-top:8px"><button class="btn s" onclick="sendOffer(\''+esc(id)+'\')">ส่งข้อเสนอราคา</button>';
+  window.RATE=j.rate;var x=j.mine?'<p class="note">คุณรับงานนี้แล้ว ดูข้อมูลลูกค้าได้ที่ “งานของฉัน”</p>':
+   '<button class="btn p" onclick="acceptJob(\''+esc(id)+'\')">รับงานราคาประเมิน '+money(j.price)+'</button><label>หรือเสนอราคาของคุณ (บาท)</label><input id="op" type="number" inputmode="numeric" oninput="pv()" value="'+esc(j.myOffer||"")+'"><div class="note" id="pv"></div><input id="on" placeholder="หมายเหตุ (ไม่บังคับ)" style="margin-top:8px"><button class="btn s" onclick="sendOffer(\''+esc(id)+'\')">ส่งข้อเสนอราคา</button>';
   app('<h2>งาน '+esc(j.id)+'</h2>'+jobRow(j,x)+'<div class="err" id="err"></div><button class="btn s" onclick="back()">กลับ</button>');
 }).catch(fail)}
 function acceptJob(id){api("POST","/driver/jobs/"+id+"/accept").then(function(){app('<h2>✅ รับงานแล้ว</h2><p class="note">ดูข้อมูลติดต่อลูกค้าได้ที่ “งานของฉัน”</p><button class="btn p" onclick="myJobs()">งานของฉัน</button>')}).catch(function(x){err(x&&x.error||"ไม่สำเร็จ")})}
@@ -189,6 +200,13 @@ function sendOffer(id){
   var pr=+document.getElementById("op").value;if(!(pr>0)){err("กรุณาใส่ราคาที่เสนอ");return}
   api("POST","/driver/jobs/"+id+"/offer",{price:pr,note:document.getElementById("on").value.trim()}).then(function(){app('<h2>📨 ส่งข้อเสนอแล้ว</h2><p class="note">ทีมงานจะแจ้งผลทาง LINE หากคุณได้รับเลือก</p><button class="btn s" onclick="back()">กลับ</button>')}).catch(function(x){err(x&&x.error||"ไม่สำเร็จ")});
 }
+function pv(){var v=+document.getElementById("op").value,r=window.RATE||10;document.getElementById("pv").textContent=v>0?"หักค่าคอมมิชชั่น "+r+"% แล้วคุณได้สุทธิประมาณ "+money(v-Math.round(v*r/100)):""}
+function earn(){api("GET","/driver/earnings").then(function(e){
+  var t=e.total;
+  app('<h2>💰 รายได้ของฉัน</h2><div class="sum"><div><span>งานที่เสร็จสิ้น</span><b>'+t.count+' งาน</b></div><div><span>ค่าบริการรวม</span><b>'+money(t.gross)+'</b></div><div><span>หักค่าคอมมิชชั่น '+e.rate+'%</span><b>−'+money(t.commission)+'</b></div><div><span>รายได้สุทธิ</span><b style="color:var(--brand);font-size:18px">'+money(t.net)+'</b></div></div>'+
+  '<p class="note">บริษัทหักค่าคอมมิชชั่น '+e.rate+'% จากค่าบริการของแต่ละงาน รายได้สุทธิ = ค่าบริการ − ค่าคอมมิชชั่น'+(e.pendingCount?'<br>งานที่ยังไม่เสร็จ '+e.pendingCount+' งาน คาดว่าจะได้สุทธิอีกประมาณ '+money(e.pendingNet):'')+'</p>'+
+  (e.done.length?e.done.map(function(j){return jobRow(Object.assign({},j,{net:null}),'<div class="sum" style="margin-top:6px"><div><span>ค่าบริการ</span><b>'+money(j.gross)+'</b></div><div><span>หักคอมมิชชั่น '+j.rate+'%</span><b>−'+money(j.commission)+'</b></div><div><span>ได้สุทธิ</span><b>'+money(j.net)+'</b></div></div>')}).join(""):'<p class="who">ยังไม่มีงานที่เสร็จสิ้น</p>')+'<button class="btn s" onclick="back()">กลับ</button>');
+}).catch(fail)}
 // ====== แอดมิน: งานรอคนขับ + ข้อเสนอราคา ======
 function adminJobs(){api("GET","/driver/admin/jobs",null,1).then(function(L){
   app('<h2>งานรอคนขับ ('+L.length+')</h2>'+(L.length?L.map(function(j){
