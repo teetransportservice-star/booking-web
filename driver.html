@@ -27,6 +27,61 @@ input[type=checkbox]{width:auto;margin-right:8px}
 .sum span{color:var(--muted)}.sum b{text-align:right;word-break:break-all}
 .note{font-size:12px;color:var(--muted);line-height:1.5}
 </style>
+<!-- PREMIUM-UI:START (ลบทั้งบล็อกนี้จนถึงคอมเมนต์ปิดท้าย เพื่อกลับเป็นแบบเดิม) -->
+<meta name="theme-color" content="#0B1B33">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F5F3EE;--card:#FFFFFF;--text:#0F172A;--muted:#667085;--line:#E8E3D8;--brand:#B08A3E;--brandtxt:#0B1B33;--bt:#0B1B33;--sel:#FBF5E6;--navy:#0B1B33;--navy2:#17305A;--gold1:#D9B86C;--gold2:#B08A3E;--shadow:0 1px 2px rgba(11,27,51,.05),0 10px 30px rgba(11,27,51,.07)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0A101C;--card:#121B2D;--text:#EEF2F7;--muted:#97A3B6;--line:#233048;--brand:#D2AE63;--brandtxt:#0B1B33;--bt:#0B1B33;--sel:#2A2413;--shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.35)}:root:not([data-theme="light"]) .tag{color:#E6C98A}}
+:root[data-theme="dark"]{--bg:#0A101C;--card:#121B2D;--text:#EEF2F7;--muted:#97A3B6;--line:#233048;--brand:#D2AE63;--brandtxt:#0B1B33;--bt:#0B1B33;--sel:#2A2413;--shadow:0 1px 2px rgba(0,0,0,.5),0 10px 30px rgba(0,0,0,.35)}
+:root[data-theme="dark"] .tag{color:#E6C98A}
+body{line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{padding-top:0;padding-bottom:100px}
+header{position:relative;background:linear-gradient(160deg,var(--navy) 0%,var(--navy2) 100%);color:#fff;margin:0 -14px 16px;padding:22px 20px 36px;border-radius:0 0 28px 28px;box-shadow:0 12px 32px rgba(11,27,51,.28)}
+header::after{content:"";position:absolute;left:20px;bottom:0;width:56px;height:3px;border-radius:3px;background:linear-gradient(90deg,var(--gold1),var(--gold2))}
+header h1{font-size:19px;font-weight:600;color:#fff}
+header .who{color:rgba(255,255,255,.72);font-size:12px}
+.tabs{position:relative;margin-top:-30px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:4px;box-shadow:var(--shadow)}
+.tabs button{border-radius:14px;font-weight:600;color:var(--muted);transition:.2s}
+.tabs button.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:var(--navy);box-shadow:0 6px 14px rgba(176,138,62,.3)}
+.steps i{height:5px;border-radius:5px;background:var(--line);transition:.3s}
+.steps i.on{background:linear-gradient(90deg,var(--gold1),var(--gold2))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:var(--shadow);animation:up .3s ease both}
+h2{font-size:16px;font-weight:600;margin:0 0 12px}
+label{font-size:12.5px;font-weight:500;color:var(--muted);margin:14px 0 6px;letter-spacing:.2px}
+input,select,textarea{background:var(--bg);border:1.5px solid transparent;border-radius:14px;padding:14px 15px;font-size:15px;transition:.15s}
+input:focus,select:focus,textarea:focus{outline:none;background:var(--card);border-color:var(--gold2);box-shadow:0 0 0 4px rgba(176,138,62,.18)}
+input[type=checkbox]{padding:0;width:18px;height:18px;accent-color:var(--brand)}
+.v{position:relative;border:1.5px solid var(--line);border-radius:18px;padding:12px;background:var(--card);box-shadow:var(--shadow);transition:.15s}
+.v:active{transform:scale(.98)}
+.v .e{display:grid;place-items:center;width:64px;height:46px;border-radius:14px;background:linear-gradient(145deg,var(--navy),var(--navy2));color:var(--gold1);margin-bottom:10px;box-shadow:0 8px 16px rgba(11,27,51,.22)}
+.v .e svg{width:50px;height:auto;display:block}
+.v b{font-size:14px;font-weight:600}
+.v small{font-size:11.5px;line-height:1.45}
+.v.on{border-color:var(--gold2);background:var(--sel);box-shadow:0 0 0 3px rgba(176,138,62,.18),var(--shadow)}
+.v.on::after{content:"✓";position:absolute;top:10px;right:10px;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--gold1),var(--gold2));color:var(--navy);display:grid;place-items:center;font-size:12px;font-weight:800}
+.bar{background:var(--card);background:color-mix(in srgb,var(--card) 88%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-top:1px solid var(--line);box-shadow:0 -10px 30px rgba(11,27,51,.07);gap:12px}
+.bar button,.btn{border-radius:16px;padding:15px;font-weight:700;transition:transform .12s,box-shadow .2s,opacity .2s}
+.bar button:active,.btn:active{transform:scale(.97)}
+.p{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:var(--navy);box-shadow:0 8px 20px rgba(176,138,62,.35)}
+.p:disabled{box-shadow:none;opacity:.45}
+.s{background:var(--card);color:var(--text);border:1.5px solid var(--line)!important}
+.slot{border-radius:14px;padding:12px 0;background:var(--bg);border:1.5px solid transparent;font-weight:500;transition:.15s}
+.slot.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:var(--navy);box-shadow:0 6px 14px rgba(176,138,62,.3)}
+.tag{background:var(--sel);color:#7A5714;border:1px solid rgba(176,138,62,.35);padding:3px 10px;font-weight:600}
+.sum div{padding:10px 0}
+.sum b{font-variant-numeric:tabular-nums;font-weight:600}
+.empty{padding:44px 0}
+.err{color:#D14343}
+.link{color:#D14343;font-weight:500}
+.ok .big{font-size:60px;animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes up{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:scale(1);opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+<!-- PREMIUM-UI:END -->
 </head>
 <body>
 <div class="wrap"><header><h1>🚛 สมัครคนขับร่วม</h1><div class="who" id="who">โหมดทดลอง</div></header><div id="app" class="card">กำลังโหลด…</div></div>
@@ -52,7 +107,7 @@ var SEC=[
 ];
 var profile=null,liffOk=false,AK="",AL=[],AF="ทั้งหมด",RATE_PCT=10;
 function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]})}
-function app(h){document.getElementById("app").className="";document.getElementById("app").innerHTML=h}
+function app(h){document.getElementById("app").className="card";document.getElementById("app").innerHTML=h}
 
 // ====== เรียก API (หรือจำลองในเครื่องเมื่อไม่มี API_URL) ======
 function api(m,p,b,adm){
@@ -94,7 +149,7 @@ function initLiff(cb){
 function boot(){
   if(location.hash==="#admin"){document.getElementById("who").textContent="แอดมิน";admin();return}
   var j=new URLSearchParams(location.search).get("job")||(/^#job=/.test(location.hash)?location.hash.slice(5):"");
-  api("GET","/driver/me").then(function(d){RATE_PCT=d.commissionPct||RATE_PCT;d.registered?(j&&d.status==="อนุมัติแล้ว"?jobDetail(j):home(d)):form()}).catch(function(x){app('<p>'+esc(x&&x.error||"เชื่อมต่อระบบไม่สำเร็จ กรุณาเปิดผ่านแอป LINE แล้วลองใหม่")+'</p>')});
+  api("GET","/driver/me").then(function(d){RATE_PCT=d.commissionPct||RATE_PCT;d.registered?(j&&d.status==="อนุมัติแล้ว"?jobDetail(j):home(d)):regForm()}).catch(function(x){app('<p>'+esc(x&&x.error||"เชื่อมต่อระบบไม่สำเร็จ กรุณาเปิดผ่านแอป LINE แล้วลองใหม่")+'</p>')});
 }
 
 // ====== ฟอร์มสมัคร ======
@@ -104,7 +159,7 @@ function fld(f){
   else h=a+'<input '+id+' type="'+(t==="date"?"date":t==="tel"?"tel":"text")+'"'+(t==="num"?' inputmode="numeric" maxlength="'+f[3]+'"':"")+' autocomplete="off">';
   return f[4]==="tr"?'<div id="trw" style="display:none">'+h+'</div>':h;
 }
-function form(note){
+function regForm(note){
   app((note||"")+SEC.map(function(s){return '<h2 style="margin-top:14px">'+s[0]+'</h2>'+s[1].map(fld).join("")}).join("")+
   commissionBox()+'<p class="note" style="margin-top:14px"><label style="display:flex;color:var(--text);font-size:13px"><input type="checkbox" id="cs">ข้าพเจ้ายินยอมให้บริษัทเก็บและใช้ข้อมูลส่วนบุคคลข้างต้น (รวมถึงเลขบัตรประชาชน ใบขับขี่ และบัญชีธนาคาร) เพื่อตรวจสอบคุณสมบัติและจ่ายค่าขนส่งเท่านั้น</label></p>'+
   '<div class="err" id="err"></div><button class="btn p" onclick="submit()">ส่งใบสมัคร</button>');
@@ -146,7 +201,7 @@ function home(d){
   if(d.status==="อนุมัติแล้ว"){
     h='<h2>✅ อนุมัติแล้ว</h2><p>'+n+'<br><span class="who">'+v+'</span></p><div style="text-align:center;border-top:1px solid var(--line);padding-top:14px"><div style="font-size:40px">'+(d.available?"🟢":"⚪")+'</div><b>'+(d.available?"พร้อมรับงาน":"ยังไม่พร้อมรับงาน")+'</b><p class="note">เปิดสถานะ “พร้อมรับงาน” เพื่อให้ทีมงานเห็นว่าคุณพร้อมรับมอบหมายงาน</p><button class="btn p" onclick="avail('+(d.available?0:1)+')">'+(d.available?"หยุดรับงาน":"เริ่มรับงาน")+'</button></div><button class="btn s" onclick="jobs()">📋 งานที่เปิดรับ</button><button class="btn s" onclick="myJobs()">🚚 งานของฉัน</button><button class="btn s" onclick="earn()">💰 รายได้ของฉัน</button>';
   }else if(d.status==="ไม่ผ่าน"){
-    h='<h2>❌ ใบสมัครไม่ผ่านการตรวจสอบ</h2><p>'+n+'</p><p class="note">เหตุผล: '+esc(d.reason||"-")+'</p><button class="btn p" onclick="form()">แก้ไขและส่งใหม่</button>';
+    h='<h2>❌ ใบสมัครไม่ผ่านการตรวจสอบ</h2><p>'+n+'</p><p class="note">เหตุผล: '+esc(d.reason||"-")+'</p><button class="btn p" onclick="regForm()">แก้ไขและส่งใหม่</button>';
   }else{
     h='<h2>⏳ รอตรวจสอบ</h2><p>'+n+'<br><span class="who">'+v+'</span></p><p class="note">ทีมงานกำลังตรวจสอบเอกสาร จะแจ้งผลทาง LINE เมื่อตรวจเสร็จ</p>';
   }
