@@ -120,12 +120,12 @@ var LIFF_ID = "2012136960-dNGNm2uj"; // ใส่ LIFF ID จาก LINE Develop
 var API_URL = "https://booking-api.qtransport.workers.dev"; // URL ของ backend (server.js) เช่น https://api.example.com ; ว่าง = โหมดทดลองในเครื่อง
 var ADMIN_PIN = "1234"; // ใช้เฉพาะโหมดทดลอง (เมื่อไม่มี API_URL) — เปิดหน้าแอดมินที่ #admin
 var VEHICLES = [
-  {id:"pickup4",e:"🛻",n:"รถกระบะ 4 ล้อ",c:"บรรทุกถึง 1 ตัน",d:"ของชิ้นเล็ก/กลาง ส่งในเมือง",base:600,km:12},
-  {id:"truck6",e:"🚚",n:"รถ 6 ล้อ",c:"บรรทุกถึง 6 ตัน",d:"พาเลท เฟอร์นิเจอร์ สินค้าทั่วไป",base:1800,km:22},
-  {id:"truck10",e:"🚛",n:"รถ 10 ล้อ",c:"บรรทุกถึง 15 ตัน",d:"สินค้าปริมาณมาก ข้ามจังหวัด",base:3500,km:35},
-  {id:"trailer",e:"🚜",n:"รถพ่วง/เทรลเลอร์",c:"บรรทุกถึง 30 ตัน",d:"ตู้คอนเทนเนอร์ เครื่องจักรใหญ่",base:6000,km:55},
-  {id:"cold",e:"❄️",n:"รถห้องเย็น",c:"บรรทุกถึง 3 ตัน",d:"อาหารสด ยา สินค้าควบคุมอุณหภูมิ",base:2800,km:30},
-  {id:"van",e:"📦",n:"กระบะคอกหรือตู้ทึบ",c:"บรรทุกถึง 3 ตัน",d:"สินค้าทั่วไป พัสดุ ของที่ต้องกันฝน",base:1200,km:18}
+  {id:"pickup4",e:"🛻",n:"รถกระบะ 4 ล้อ",c:"บรรทุกถึง 1 ตัน",d:"ของชิ้นเล็ก/กลาง ส่งในเมือง",base:600,km:11},
+  {id:"truck6",e:"🚚",n:"รถ 6 ล้อ",c:"บรรทุกถึง 6 ตัน",d:"พาเลท เฟอร์นิเจอร์ สินค้าทั่วไป",base:3500,km:19},
+  {id:"truck10",e:"🚛",n:"รถ 10 ล้อ",c:"บรรทุกถึง 15 ตัน",d:"สินค้าปริมาณมาก ข้ามจังหวัด",base:4500,km:30},
+  {id:"trailer",e:"🚜",n:"รถพ่วง/เทรลเลอร์",c:"บรรทุกถึง 30 ตัน",d:"ตู้คอนเทนเนอร์ เครื่องจักรใหญ่",base:6000,km:50},
+  {id:"cold",e:"❄️",n:"รถห้องเย็น",c:"บรรทุกถึง 3 ตัน",d:"อาหารสด ยา สินค้าควบคุมอุณหภูมิ",base:2800,km:17},
+  {id:"van",e:"📦",n:"กระบะคอกหรือตู้ทึบ",c:"บรรทุกถึง 3 ตัน",d:"สินค้าทั่วไป พัสดุ ของที่ต้องกันฝน",base:1200,km:13}
 ];
 var SLOTS=["08:00","09:00","10:00","11:00","13:00","14:00","15:00","16:00","17:00"];
 var CARGO=["สินค้าทั่วไป","อาหาร/เครื่องดื่ม","วัสดุก่อสร้าง","เฟอร์นิเจอร์","เครื่องจักร/อุปกรณ์","อิเล็กทรอนิกส์","อื่น ๆ"];
@@ -137,7 +137,8 @@ function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){retur
 function load(){try{return JSON.parse(localStorage.getItem("bookings")||"[]")}catch(e){return []}}
 function save(a){try{localStorage.setItem("bookings",JSON.stringify(a))}catch(e){}}
 function veh(id){return VEHICLES.filter(function(x){return x.id===id})[0]}
-function est(){var v=veh(S.v);if(!v)return 0;return v.base+v.km*(parseFloat(S.f.km)||0)}
+var INCLUDED_KM=50; // ระยะทางที่รวมอยู่ในราคาเริ่มต้นแล้ว (กม.)
+function est(){var v=veh(S.v);if(!v)return 0;var k=parseFloat(S.f.km)||0;return v.base+v.km*Math.max(0,k-INCLUDED_KM)}
 function baht(n){return "฿"+Math.round(n).toLocaleString("th-TH")}
 function today(){var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)}
 
